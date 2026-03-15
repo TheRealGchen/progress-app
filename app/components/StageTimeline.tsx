@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { format, parseISO } from "date-fns";
 import { ChevronRight, Circle, CheckCircle2 } from "lucide-react";
+import { StageFieldsEditor } from "./StageFieldsEditor";
 
 interface StageField {
   id: number;
@@ -134,19 +135,14 @@ export function StageTimeline({ entryId, stages, notes, isArchived }: StageTimel
                   )}
                 </div>
 
-                {/* Stage fields */}
-                {stage.fields.length > 0 && (
-                  <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1">
-                    {stage.fields.map((f) => (
-                      <div key={f.id} className="text-xs">
-                        <span className="text-muted-foreground capitalize">
-                          {f.fieldKey.replace(/_/g, " ")}:{" "}
-                        </span>
-                        <span>{f.fieldValue ?? "—"}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                {/* Stage fields editor */}
+                <StageFieldsEditor
+                  entryId={entryId}
+                  stageId={stage.id}
+                  stageName={stage.name}
+                  existingFields={stage.fields}
+                  isEntered={entered}
+                />
               </div>
             </div>
           );
