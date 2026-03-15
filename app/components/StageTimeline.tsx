@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { format, parseISO } from "date-fns";
-import { ChevronRight, Circle, CheckCircle2 } from "lucide-react";
+import { ChevronRight, ChevronLeft, Circle, CheckCircle2 } from "lucide-react";
 import { StageFieldsEditor } from "./StageFieldsEditor";
 
 interface StageField {
@@ -40,6 +40,7 @@ interface StageTimelineProps {
 export function StageTimeline({ entryId, stages, notes, isArchived }: StageTimelineProps) {
   const router = useRouter();
   const [advancing, setAdvancing] = useState(false);
+  const [retreating, setRetreating] = useState(false);
   const [noteBody, setNoteBody] = useState("");
   const [addingNote, setAddingNote] = useState(false);
 
@@ -49,6 +50,13 @@ export function StageTimeline({ entryId, stages, notes, isArchived }: StageTimel
     .sort((a, b) => b.i - a.i)[0]?.i ?? 0;
 
   const isLastStage = currentStageIdx === stages.length - 1;
+
+  async function handleRetreat() {
+    setRetreating(true);
+    await fetch(`/api/entries/${entryId}/retreat`, { method: "POST" });
+    setRetreating(false);
+    router.refresh();
+  }
 
   async function handleAdvance() {
     setAdvancing(true);
@@ -73,18 +81,32 @@ export function StageTimeline({ entryId, stages, notes, isArchived }: StageTimel
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Advance button */}
-      {!isArchived && !isLastStage && (
+      {/* Stage navigation buttons */}
+      {!isArchived && (
         <div className="flex items-center gap-2">
-          <Button
-            onClick={handleAdvance}
-            disabled={advancing}
-            className="gap-1.5"
-            size="sm"
-          >
-            <ChevronRight size={14} />
-            {advancing ? "Moving..." : `Move to ${stages[currentStageIdx + 1]?.name}`}
-          </Button>
+          {currentStageIdx > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRetreat}
+              disabled={retreating}
+              className="gap-1.5"
+            >
+              <ChevronLeft size={14} />
+              {retreating ? "Going back..." : `Back to ${stages[currentStageIdx - 1]?.name}`}
+            </Button>
+          )}
+          {!isLastStage && (
+            <Button
+              onClick={handleAdvance}
+              disabled={advancing}
+              className="gap-1.5"
+              size="sm"
+            >
+              <ChevronRight size={14} />
+              {advancing ? "Moving..." : `Move to ${stages[currentStageIdx + 1]?.name}`}
+            </Button>
+          )}
         </div>
       )}
 
