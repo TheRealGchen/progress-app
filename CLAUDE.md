@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Progress Tracker App — a web app for tracking multi-stage workflows (job hunting, apartment hunting, etc.). Built with Next.js + TypeScript, SQLite + Drizzle ORM, Tailwind CSS, shadcn/ui, and Framer Motion. No separate backend server; all backend logic lives in Next.js API routes.
+Progress Tracker App — a web app for tracking multi-stage workflows (job hunting, apartment hunting, etc.). Built with Next.js + TypeScript, libSQL/Turso + Drizzle ORM, Tailwind CSS, shadcn/ui, and Framer Motion. No separate backend server; all backend logic lives in Next.js API routes.
+
+Phases 1–3 are complete. Phase 4 (polish) is in progress. Phase 5 deployment is done (Vercel + Turso).
 
 ## Commands
-
-Once scaffolded (Phase 1 not yet complete):
 
 ```bash
 npm install          # Install dependencies
@@ -16,9 +16,24 @@ npm run db:migrate   # Run database migrations
 npm run dev          # Start development server
 ```
 
-Database file lives at `./data/progress.db` (local SQLite).
+In development, the database falls back to a local SQLite file at `./data/progress.db` when `TURSO_DATABASE_URL` is not set.
+
+## Environment Variables
+
+| Variable | Description | Required |
+|---|---|---|
+| `TURSO_DATABASE_URL` | Turso DB URL (`libsql://your-db.turso.io`) | Production only |
+| `TURSO_AUTH_TOKEN` | Turso auth token | Production only |
+
+For local dev, no env vars needed. For production (Vercel), set both in the Vercel project dashboard.
 
 ## Architecture
+
+### Database
+
+Uses `@libsql/client` + `drizzle-orm/libsql`. The `db/index.ts` client reads `TURSO_DATABASE_URL` and falls back to `file:./data/progress.db` when unset — so the same code works in both dev and prod.
+
+`next.config.ts` marks `@libsql/client` as a `serverExternalPackage` so Next.js doesn't try to bundle it.
 
 ### Data Model
 
@@ -33,7 +48,7 @@ Database file lives at `./data/progress.db` (local SQLite).
 
 `stage_fields` stores dynamic per-stage data that unlocks as entries progress (e.g., recruiter name at Phone Screen, offer amount at Offer stage).
 
-### API Routes (Phase 2)
+### API Routes
 
 - `GET/POST /api/entries` — list and create entries
 - `GET/PUT/DELETE /api/entries/[id]` — single entry operations
@@ -54,11 +69,10 @@ Stage advancement is intentionally **not drag-and-drop**. The flow is:
 
 Vertical timeline layout showing completed stages with timestamps + fields, current stage with fillable fields, and future stages. A persistent freeform notes/activity log sits at the bottom.
 
-## Build Order
+## Build Status
 
-The project follows a phased approach tracked in README.md:
-- **Phase 1** (Foundation): Next.js scaffold, Tailwind, shadcn/ui, Drizzle schema
-- **Phase 2** (Backend): API routes
-- **Phase 3** (Core UI): App shell, dashboard, cards, detail view, quick-add modal
-- **Phase 4** (Polish): Tips, staleness alerts, reminders, Framer Motion transitions
-- **Phase 5** (Future): Cloud sync (Turso/Supabase), Vercel deploy, mobile, push notifications
+- **Phase 1** (Foundation): ✅ Complete
+- **Phase 2** (Backend): ✅ Complete
+- **Phase 3** (Core UI): ✅ Complete
+- **Phase 4** (Polish): 🚧 In progress — tips, staleness alerts, reminders, Framer Motion
+- **Phase 5** (Deployment): ✅ Vercel + Turso configured; mobile + push notifications remaining
