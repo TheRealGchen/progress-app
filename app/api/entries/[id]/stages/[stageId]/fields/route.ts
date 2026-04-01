@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { stageFields, stages } from "@/db/schema";
+
+export const dynamic = "force-dynamic";
 import { eq, and } from "drizzle-orm";
 
 // PUT /api/entries/[id]/stages/[stageId]/fields

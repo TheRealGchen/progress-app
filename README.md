@@ -1,6 +1,6 @@
 # Progress Tracker App
 
-A progress tracking app for multi-stage processes like job hunting, apartment hunting, and similar workflows. Tracks multiple items through configurable stages, surfaces tips/reminders at each stage, and is designed for future cloud sync.
+A progress tracking app for multi-stage processes like job hunting, apartment hunting, and similar workflows. Tracks multiple items through configurable stages, surfaces tips/reminders at each stage, and supports both local and cloud (Turso) databases.
 
 ---
 
@@ -12,11 +12,83 @@ A progress tracking app for multi-stage processes like job hunting, apartment hu
 | Styling | Tailwind CSS | Utility-first, co-located styles |
 | Components | shadcn/ui | Composable, Radix-based, polished |
 | Animations | Framer Motion | Transitions and stage movement polish |
-| Database | SQLite + Drizzle ORM | Local-first, typed, easy to migrate |
-| Cloud sync (future) | Turso or Supabase | SQLite-compatible or Postgres |
-| Deployment (future) | Vercel | Natural Next.js home |
+| Database | libSQL + Drizzle ORM | Local file in dev, Turso remote in prod |
+| Deployment | Vercel | Natural Next.js home |
 
 **No separate backend server** — Next.js API routes handle all backend logic.
+
+---
+
+## Local Development
+
+### Prerequisites
+
+- Node.js 18+
+- npm
+
+### Setup
+
+```bash
+npm install
+npm run db:migrate
+npm run dev
+```
+
+By default the app uses a local SQLite file at `./data/progress.db`. No environment variables needed for local dev.
+
+### Environment Variables (optional for local dev)
+
+| Variable | Description | Default |
+|---|---|---|
+| `TURSO_DATABASE_URL` | Turso database URL (e.g. `libsql://your-db.turso.io`) | Uses local `file:./data/progress.db` |
+| `TURSO_AUTH_TOKEN` | Turso auth token | None (not needed for local file) |
+
+Create a `.env.local` file in the project root to set these:
+
+```bash
+TURSO_DATABASE_URL=libsql://your-db-name.turso.io
+TURSO_AUTH_TOKEN=your-token-here
+```
+
+---
+
+## Deployment (Vercel + Turso)
+
+### 1. Create a Turso database
+
+```bash
+# Install Turso CLI
+curl -sSfL https://get.tur.so/install.sh | bash
+
+# Log in
+turso auth login
+
+# Create a database
+turso db create progress-app
+
+# Get the URL and auth token
+turso db show progress-app --url
+turso db tokens create progress-app
+```
+
+### 2. Run migrations against Turso
+
+```bash
+TURSO_DATABASE_URL=libsql://your-db.turso.io \
+TURSO_AUTH_TOKEN=your-token \
+npm run db:migrate
+```
+
+### 3. Deploy to Vercel
+
+Connect the repo to Vercel, then add these environment variables in the Vercel project settings:
+
+| Variable | Value |
+|---|---|
+| `TURSO_DATABASE_URL` | `libsql://your-db-name.turso.io` |
+| `TURSO_AUTH_TOKEN` | Your Turso auth token |
+
+Vercel will auto-deploy on push to `main`. No other configuration required — `next.config.ts` already marks `@libsql/client` as a server external package.
 
 ---
 
@@ -73,7 +145,7 @@ Plus a persistent **freeform notes / activity log** at the bottom, timestamped.
 
 ---
 
-## Data Model (Planned)
+## Data Model
 
 ### `tracker_types`
 Defines a category of tracking (e.g. "Job Hunt", "Apartment Hunt")
@@ -101,52 +173,39 @@ Per-stage optional reminders
 
 ---
 
-## TODO — Build Order
+## Build Status
 
-### Phase 1: Foundation
-- [ ] Initialize Next.js project (`npx create-next-app@latest`)
-- [ ] Install and configure Tailwind CSS
-- [ ] Install and configure shadcn/ui
-- [ ] Install Drizzle ORM + better-sqlite3
-- [ ] Define database schema and run initial migration
+### ✅ Phase 1: Foundation
+- Next.js + TypeScript scaffold
+- Tailwind CSS + shadcn/ui configured
+- Drizzle ORM + libSQL schema defined and migrated
 
-### Phase 2: Backend (API Routes)
-- [ ] `GET/POST /api/entries` — list and create entries
-- [ ] `GET/PUT/DELETE /api/entries/[id]` — single entry operations
-- [ ] `POST /api/entries/[id]/advance` — advance to next stage
-- [ ] `GET/POST /api/entries/[id]/notes` — notes log
-- [ ] `POST /api/entries/[id]/stages` — add custom stage
-- [ ] `GET /api/tracker-types` — list tracker type templates
+### ✅ Phase 2: Backend (API Routes)
+- `GET/POST /api/entries` — list and create entries
+- `GET/PUT/DELETE /api/entries/[id]` — single entry operations
+- `POST /api/entries/[id]/advance` — advance to next stage
+- `GET/POST /api/entries/[id]/notes` — notes log
+- `POST /api/entries/[id]/stages` — add custom stage
+- `GET /api/tracker-types` — list tracker type templates
 
-### Phase 3: Core UI
-- [ ] App shell — sidebar nav, main content area
-- [ ] Home / dashboard — list of all active entries grouped by tracker type
-- [ ] Entry card — status pill, stage label, staleness indicator
-- [ ] Entry detail view — vertical timeline, stage fields, notes log
-- [ ] Quick-add form modal
-- [ ] Stage advance flow — contextual prompt + tip card
+### ✅ Phase 3: Core UI
+- App shell — sidebar nav, main content area
+- Dashboard — active entries grouped by tracker type
+- Entry card — status pill, stage label, staleness indicator
+- Entry detail view — vertical timeline, stage fields, notes log
+- Quick-add form modal
+- Stage advance flow — contextual prompt + tip card
 
-### Phase 4: Polish
+### 🚧 Phase 4: Polish
 - [ ] Tip/reminder content per stage per tracker type
 - [ ] Staleness alert logic
 - [ ] Per-stage reminder scheduling (local)
 - [ ] Framer Motion transitions on stage advance
 - [ ] Empty states and onboarding
 
-### Phase 5: Future
-- [ ] Cloud sync via Turso or Supabase
-- [ ] Deploy to Vercel
+### ✅ Phase 5: Deployment
+- Migrated from better-sqlite3 → libSQL (`@libsql/client`) for Vercel compatibility
+- Turso remote database support (falls back to local file in dev)
+- Vercel deployment configured
 - [ ] Mobile-responsive layout
 - [ ] Push notifications for reminders
-
----
-
-## Setup (once scaffolded)
-
-```bash
-npm install
-npm run db:migrate
-npm run dev
-```
-
-Database file will live at `./data/progress.db` (local SQLite).
