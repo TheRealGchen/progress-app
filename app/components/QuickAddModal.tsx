@@ -34,6 +34,7 @@ export function QuickAddModal({ trackerTypes }: QuickAddModalProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
     trackerTypeId: trackerTypes[0]?.id?.toString() ?? "",
     company: "",
@@ -47,20 +48,31 @@ export function QuickAddModal({ trackerTypes }: QuickAddModalProps) {
     e.preventDefault();
     if (!form.company || !form.title) return;
     setLoading(true);
+    setError(null);
 
-    await fetch("/api/entries", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...form,
-        trackerTypeId: parseInt(form.trackerTypeId),
-      }),
-    });
+    try {
+      const res = await fetch("/api/entries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          trackerTypeId: parseInt(form.trackerTypeId),
+        }),
+      });
 
-    setLoading(false);
-    setOpen(false);
-    setForm((f) => ({ ...f, company: "", title: "", url: "", source: "" }));
-    router.refresh();
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? `Request failed (${res.status})`);
+      }
+
+      setOpen(false);
+      setForm((f) => ({ ...f, company: "", title: "", url: "", source: "" }));
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -165,6 +177,10 @@ export function QuickAddModal({ trackerTypes }: QuickAddModalProps) {
               placeholder="https://..."
             />
           </div>
+
+          {error && (
+            <p className="text-sm text-red-500">{error}</p>
+          )}
 
           <div className="flex justify-end gap-2 mt-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>

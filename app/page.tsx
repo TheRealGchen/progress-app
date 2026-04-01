@@ -4,6 +4,8 @@ import { eq, isNull, desc } from "drizzle-orm";
 import { EntryCard } from "./components/EntryCard";
 import { QuickAddModal } from "./components/QuickAddModal";
 
+export const dynamic = "force-dynamic";
+
 async function getEntriesWithStages() {
   const allEntries = await db
     .select()
