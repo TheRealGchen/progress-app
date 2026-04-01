@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StagePill } from "./StagePill";
-import { differenceInDays, parseISO } from "date-fns";
+import { differenceInDays, formatDistanceToNowStrict, parseISO } from "date-fns";
 
 interface Stage {
   id: number;
@@ -27,9 +27,17 @@ function isStale(enteredAt: string | null): boolean {
   return differenceInDays(new Date(), parseISO(enteredAt)) > 7;
 }
 
+function relativeDate(enteredAt: string | null): string | null {
+  if (!enteredAt) return null;
+  const days = differenceInDays(new Date(), parseISO(enteredAt));
+  if (days === 0) return "today";
+  return formatDistanceToNowStrict(parseISO(enteredAt), { addSuffix: true });
+}
+
 export function EntryCard({ id, company, title, priority, currentStage, stages }: EntryCardProps) {
   const stale = isStale(currentStage?.enteredAt ?? null);
   const isLast = currentStage?.position === Math.max(...stages.map((s) => s.position));
+  const lastUpdated = relativeDate(currentStage?.enteredAt ?? null);
 
   const priorityColors: Record<string, string> = {
     high: "bg-red-100 text-red-700",
@@ -64,6 +72,11 @@ export function EntryCard({ id, company, title, priority, currentStage, stages }
               <Badge variant="outline" className="text-orange-600 border-orange-300 text-xs">
                 Stale
               </Badge>
+            )}
+            {lastUpdated && (
+              <span className="text-xs text-muted-foreground ml-auto">
+                {lastUpdated}
+              </span>
             )}
           </div>
         </CardContent>
