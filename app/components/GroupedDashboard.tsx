@@ -62,20 +62,23 @@ function DraggableCard({ entry }: { entry: Entry }) {
   });
 
   const style = transform
-    ? { transform: CSS.Translate.toString(transform), opacity: isDragging ? 0.4 : 1 }
+    ? { transform: CSS.Translate.toString(transform), opacity: isDragging ? 0.3 : 1 }
     : undefined;
 
   return (
-    <div ref={setNodeRef} style={style} className="relative group/drag">
-      {/* Drag handle */}
-      <button
-        {...listeners}
-        {...attributes}
-        className="absolute top-2 right-2 z-10 opacity-0 group-hover/drag:opacity-100 transition-opacity cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground p-0.5"
-        onClick={(e) => e.preventDefault()}
-      >
+    // listeners go on the outer div — whole card is the drag surface.
+    // activationConstraint distance:8 means short taps still navigate (Link inside).
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="relative group/drag touch-none"
+      {...listeners}
+      {...attributes}
+    >
+      {/* Visual drag-handle hint only */}
+      <span className="absolute top-2 right-2 z-10 opacity-0 group-hover/drag:opacity-60 transition-opacity text-muted-foreground pointer-events-none">
         <GripVertical size={13} />
-      </button>
+      </span>
       <EntryCard
         id={entry.id}
         company={entry.company}
@@ -178,7 +181,7 @@ export function GroupedDashboard({
   const [newGroupName, setNewGroupName] = useState("");
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 10 } })
   );
 
   const activeEntry = activeEntryId != null ? entries.find((e) => e.id === activeEntryId) : null;
