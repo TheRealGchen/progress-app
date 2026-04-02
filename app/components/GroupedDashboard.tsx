@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useOptimistic } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -16,7 +15,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { EntryCard } from "./EntryCard";
 import { Input } from "@/components/ui/input";
-import { Check, GripVertical, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, GripVertical, Pencil, Plus, Trash2, X } from "lucide-react";
 
 interface Stage {
   id: number;
@@ -109,6 +108,7 @@ function GroupColumn({
   const { setNodeRef } = useDroppable({ id: `group-${group.id}` });
   const [editing, setEditing] = useState(false);
   const [nameVal, setNameVal] = useState(group.name);
+  const [collapsed, setCollapsed] = useState(false);
 
   function handleRenameSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -118,9 +118,16 @@ function GroupColumn({
   }
 
   return (
-    <div className="flex flex-col min-w-[220px] w-full sm:w-[220px] lg:w-[240px] shrink-0">
-      {/* Column header */}
+    <div className="w-full">
+      {/* Group header */}
       <div className="flex items-center gap-1.5 mb-2 group/header">
+        <button
+          onClick={() => setCollapsed((c) => !c)}
+          className="text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+        </button>
+
         {editing ? (
           <form onSubmit={handleRenameSubmit} className="flex items-center gap-1 flex-1">
             <Input
@@ -145,17 +152,20 @@ function GroupColumn({
         )}
       </div>
 
-      {/* Drop zone */}
+      {/* Drop zone — hidden when collapsed but still mounted so DnD works */}
       <div
         ref={setNodeRef}
-        className={`flex flex-col gap-2 min-h-[80px] rounded-lg p-2 transition-colors ${
+        className={`rounded-lg p-2 transition-colors ${
           isOver ? "bg-primary/5 ring-2 ring-primary/20" : "bg-muted/30"
-        }`}
+        } ${collapsed ? "hidden" : ""}`}
       >
-        {entries.map((entry) => (
-          <DraggableCard key={entry.id} entry={entry} />
-        ))}
-        {entries.length === 0 && (
+        {entries.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {entries.map((entry) => (
+              <DraggableCard key={entry.id} entry={entry} />
+            ))}
+          </div>
+        ) : (
           <p className="text-xs text-muted-foreground/50 text-center py-4 select-none">
             Drop here
           </p>
@@ -172,7 +182,6 @@ export function GroupedDashboard({
   trackerTypeLabel,
   trackerTypeId,
 }: GroupedDashboardProps) {
-  const router = useRouter();
   const [entries, setEntries] = useState(initialEntries);
   const [groups, setGroups] = useState(initialGroups);
   const [activeEntryId, setActiveEntryId] = useState<number | null>(null);
@@ -304,7 +313,7 @@ export function GroupedDashboard({
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-4 overflow-x-auto pb-2">
+        <div className="flex flex-col gap-4">
           {allGroups.map((group) => (
             <GroupColumn
               key={group.id}
@@ -316,7 +325,7 @@ export function GroupedDashboard({
             />
           ))}
 
-          {/* Ungrouped column — shown only if there are ungrouped entries */}
+          {/* Ungrouped section — shown only if there are ungrouped entries */}
           {ungroupedEntries.length > 0 && (
             <GroupColumn
               key="ungrouped"
@@ -332,7 +341,7 @@ export function GroupedDashboard({
         {/* Drag overlay — ghost card while dragging */}
         <DragOverlay>
           {activeEntry && (
-            <div className="rotate-1 opacity-90 shadow-xl w-[220px]">
+            <div className="rotate-1 opacity-90 shadow-xl w-[280px]">
               <EntryCard
                 id={activeEntry.id}
                 company={activeEntry.company}
