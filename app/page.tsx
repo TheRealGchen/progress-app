@@ -1,8 +1,8 @@
 import { db } from "@/db";
-import { entries, stages, stageFields, trackerTypes } from "@/db/schema";
-import { eq, isNull, desc } from "drizzle-orm";
-import { EntryCard } from "./components/EntryCard";
+import { entries, stages, stageFields, trackerTypes, entryGroups } from "@/db/schema";
+import { eq, isNull, desc, asc } from "drizzle-orm";
 import { QuickAddModal } from "./components/QuickAddModal";
+import { GroupedDashboard } from "./components/GroupedDashboard";
 
 export const dynamic = "force-dynamic";
 
@@ -35,21 +35,16 @@ async function getEntriesWithStages() {
 }
 
 export default async function Dashboard() {
-  const [allEntries, types] = await Promise.all([
+  const [allEntries, types, groups] = await Promise.all([
     getEntriesWithStages(),
     db.select().from(trackerTypes),
+    db.select().from(entryGroups).orderBy(asc(entryGroups.position)),
   ]);
-
-  // Group by tracker type
-  const grouped = types.map((type) => ({
-    type,
-    entries: allEntries.filter((e) => e.trackerTypeId === type.id),
-  }));
 
   const totalActive = allEntries.length;
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-6 max-w-full mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-semibold">Dashboard</h2>
@@ -66,32 +61,17 @@ export default async function Dashboard() {
           <p className="text-sm">Add your first entry to get started.</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-8">
-          {grouped
-            .filter((g) => g.entries.length > 0)
-            .map(({ type, entries: groupEntries }) => (
-              <section key={type.id}>
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                  {type.name}
-                  <span className="ml-2 normal-case font-normal">
-                    ({groupEntries.length})
-                  </span>
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                  {groupEntries.map((entry) => (
-                    <EntryCard
-                      key={entry.id}
-                      id={entry.id}
-                      company={entry.company}
-                      title={entry.title}
-                      priority={entry.priority}
-                      currentStage={entry.currentStage}
-                      stages={entry.stages}
-                      currentStageFields={entry.currentStageFields}
-                    />
-                  ))}
-                </div>
-              </section>
+        <div className="flex flex-col gap-10">
+          {types
+            .filter((type) => allEntries.some((e) => e.trackerTypeId === type.id))
+            .map((type) => (
+              <GroupedDashboard
+                key={type.id}
+                trackerTypeLabel={type.name}
+                trackerTypeId={type.id}
+                entries={allEntries.filter((e) => e.trackerTypeId === type.id)}
+                groups={groups}
+              />
             ))}
         </div>
       )}

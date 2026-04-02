@@ -7,6 +7,13 @@ export const trackerTypes = sqliteTable("tracker_types", {
   defaultStages: text("default_stages").notNull(), // JSON array of stage names
 });
 
+export const entryGroups = sqliteTable("entry_groups", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  position: integer("position").notNull().default(0),
+  color: text("color"), // optional hex or tailwind color hint
+});
+
 export const entries = sqliteTable("entries", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   trackerTypeId: integer("tracker_type_id")
@@ -19,6 +26,7 @@ export const entries = sqliteTable("entries", {
     .notNull()
     .default("medium"),
   source: text("source"),
+  groupId: integer("group_id").references(() => entryGroups.id, { onDelete: "set null" }),
   createdAt: text("created_at")
     .notNull()
     .default(sql`(datetime('now'))`),
@@ -67,6 +75,7 @@ export const reminders = sqliteTable("reminders", {
 });
 
 // Types
+export type EntryGroup = typeof entryGroups.$inferSelect;
 export type TrackerType = typeof trackerTypes.$inferSelect;
 export type Entry = typeof entries.$inferSelect;
 export type Stage = typeof stages.$inferSelect;
