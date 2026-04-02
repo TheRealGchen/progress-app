@@ -15,6 +15,13 @@
       "when": 1775161243087,
       "tag": "0001_futuristic_stryfe",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1775162527402,
+      "tag": "0002_sticky_hex",
+      "breakpoints": true
     }
   ]
 }

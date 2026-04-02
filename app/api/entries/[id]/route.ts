@@ -49,6 +49,28 @@ export async function GET(
   });
 }
 
+// PATCH — partial update (e.g. groupId reassignment from drag-and-drop)
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const body = await req.json();
+  const allowed: Record<string, unknown> = {};
+  if ("groupId" in body) allowed.groupId = body.groupId ?? null;
+  if ("priority" in body) allowed.priority = body.priority;
+  if ("title" in body) allowed.title = body.title;
+  if ("company" in body) allowed.company = body.company;
+
+  const [updated] = await db
+    .update(entries)
+    .set(allowed)
+    .where(eq(entries.id, parseInt(id)))
+    .returning();
+
+  return NextResponse.json(updated);
+}
+
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
