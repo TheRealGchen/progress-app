@@ -28,12 +28,14 @@ export const STAGE_FIELDS: Record<string, FieldDef[]> = {
     { key: "prep_notes", label: "Prep Notes", type: "textarea", optional: true },
   ],
   Interview: [
-    { key: "round_number", label: "Round #", type: "number" },
+    { key: "scheduled_at", label: "Scheduled", type: "datetime-local" },
+    { key: "round_number", label: "Round #", type: "number", optional: true },
     {
       key: "format",
       label: "Format",
       type: "text",
       placeholder: "Technical, Behavioural, System Design…",
+      optional: true,
     },
     {
       key: "interviewers",
