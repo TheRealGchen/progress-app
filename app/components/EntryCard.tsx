@@ -115,6 +115,7 @@ export function EntryCard({ id, company, title, priority, currentStage, stages, 
                 stageName={currentStage.name}
                 entryId={id}
                 isLast={isLast}
+                readOnly
               />
             )}
             {stale && (

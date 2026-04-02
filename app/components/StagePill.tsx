@@ -20,12 +20,14 @@ interface StagePillProps {
   entryId: number;
   isLast: boolean;
   onAdvance?: () => void;
+  readOnly?: boolean;
 }
 
-export function StagePill({ stageName, entryId, isLast, onAdvance }: StagePillProps) {
+export function StagePill({ stageName, entryId, isLast, onAdvance, readOnly = false }: StagePillProps) {
   const router = useRouter();
 
   async function handleClick(e: React.MouseEvent) {
+    if (readOnly) return;
     e.preventDefault();
     e.stopPropagation();
     if (isLast) return;
@@ -41,15 +43,15 @@ export function StagePill({ stageName, entryId, isLast, onAdvance }: StagePillPr
   return (
     <span
       onClick={handleClick}
-      title={isLast ? "Final stage" : "Click to advance to next stage"}
+      title={readOnly ? stageName : isLast ? "Final stage" : "Click to advance to next stage"}
       className={cn(
         "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors",
         colorClass,
-        !isLast && "cursor-pointer"
+        !readOnly && !isLast && "cursor-pointer"
       )}
     >
       {stageName}
-      {!isLast && <span className="ml-1 opacity-50">→</span>}
+      {!readOnly && !isLast && <span className="ml-1 opacity-50">→</span>}
     </span>
   );
 }
