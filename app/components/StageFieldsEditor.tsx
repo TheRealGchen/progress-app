@@ -18,6 +18,7 @@ interface StageFieldsEditorProps {
   entryId: number;
   stageId: number;
   stageName: string;
+  templateKey?: string | null;
   existingFields: StageField[];
   isEntered: boolean;
 }
@@ -26,11 +27,12 @@ export function StageFieldsEditor({
   entryId,
   stageId,
   stageName,
+  templateKey,
   existingFields,
   isEntered,
 }: StageFieldsEditorProps) {
   const router = useRouter();
-  const configFields = getStageFields(stageName);
+  const configFields = getStageFields(stageName, templateKey);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 

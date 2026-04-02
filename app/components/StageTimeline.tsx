@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { format, parseISO } from "date-fns";
 import { ChevronRight, ChevronLeft, Circle, CheckCircle2, Plus, Pencil, Check, X } from "lucide-react";
 import { StageFieldsEditor } from "./StageFieldsEditor";
+import { STAGE_TEMPLATES, FREEFORM_KEY } from "@/lib/stage-config";
 
 interface StageField {
   id: number;
@@ -22,6 +23,7 @@ interface Stage {
   position: number;
   enteredAt: string | null;
   custom: boolean;
+  templateKey?: string | null;
   fields: StageField[];
 }
 
@@ -89,7 +91,54 @@ function RenameStage({
   );
 }
 
-// ── Insert stage between two positions ────────────────────────────────────────
+// ── Template selector ──────────────────────────────────────────────────────────
+function TemplateSelector({
+  entryId,
+  stage,
+}: {
+  entryId: number;
+  stage: Stage;
+}) {
+  const router = useRouter();
+  const [saving, setSaving] = useState(false);
+
+  // effective template: explicit key > name-based match > freeform
+  const effectiveKey = stage.templateKey
+    ?? (STAGE_TEMPLATES.find((t) => t.key === stage.name && t.key !== FREEFORM_KEY)?.key ?? FREEFORM_KEY);
+
+  async function handleChange(newKey: string) {
+    setSaving(true);
+    await fetch(`/api/entries/${entryId}/stages/${stage.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ templateKey: newKey === FREEFORM_KEY ? null : newKey }),
+    });
+    setSaving(false);
+    router.refresh();
+  }
+
+  const label = STAGE_TEMPLATES.find((t) => t.key === effectiveKey)?.label ?? "Notes only";
+
+  return (
+    <div className="flex items-center gap-1 mt-0.5">
+      <span className="text-[10px] text-muted-foreground">template:</span>
+      <select
+        value={effectiveKey}
+        onChange={(e) => handleChange(e.target.value)}
+        disabled={saving}
+        className="text-[10px] text-muted-foreground bg-transparent border-0 outline-none cursor-pointer hover:text-foreground transition-colors appearance-none pr-3 disabled:opacity-50"
+        style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0px center" }}
+        title="Change field template for this stage"
+      >
+        {STAGE_TEMPLATES.map((t) => (
+          <option key={t.key} value={t.key}>{t.label}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+// ── Insert stage ───────────────────────────────────────────────────────────────
 function InsertStage({
   entryId,
   afterPosition,
@@ -100,18 +149,23 @@ function InsertStage({
   onDone: () => void;
 }) {
   const router = useRouter();
-  const [value, setValue] = useState("");
+  const [name, setName] = useState("");
+  const [templateKey, setTemplateKey] = useState(FREEFORM_KEY);
   const [saving, setSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function save() {
-    const trimmed = value.trim();
+    const trimmed = name.trim();
     if (!trimmed) { onDone(); return; }
     setSaving(true);
     await fetch(`/api/entries/${entryId}/stages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: trimmed, afterPosition }),
+      body: JSON.stringify({
+        name: trimmed,
+        afterPosition,
+        templateKey: templateKey === FREEFORM_KEY ? null : templateKey,
+      }),
     });
     setSaving(false);
     router.refresh();
@@ -120,20 +174,30 @@ function InsertStage({
 
   return (
     <form
-      className="flex items-center gap-1 py-1"
+      className="flex items-center gap-1.5 py-1 flex-wrap"
       onSubmit={(e) => { e.preventDefault(); save(); }}
     >
       <Input
         ref={inputRef}
         autoFocus
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
         onKeyDown={(e) => e.key === "Escape" && onDone()}
-        placeholder="New stage name…"
-        className="h-6 text-sm py-0 px-1.5 w-44"
+        placeholder="Stage name…"
+        className="h-6 text-sm py-0 px-1.5 w-36"
         disabled={saving}
       />
-      <button type="submit" disabled={saving || !value.trim()} className="text-primary hover:opacity-80 disabled:opacity-30">
+      <select
+        value={templateKey}
+        onChange={(e) => setTemplateKey(e.target.value)}
+        disabled={saving}
+        className="h-6 text-xs border rounded px-1 bg-background text-muted-foreground"
+      >
+        {STAGE_TEMPLATES.map((t) => (
+          <option key={t.key} value={t.key}>{t.label}</option>
+        ))}
+      </select>
+      <button type="submit" disabled={saving || !name.trim()} className="text-primary hover:opacity-80 disabled:opacity-30">
         <Check size={14} />
       </button>
       <button type="button" onClick={onDone} className="text-muted-foreground hover:opacity-80">
@@ -288,10 +352,16 @@ export function StageTimeline({ entryId, stages, notes, isArchived }: StageTimel
                     )}
                   </div>
 
+                  {/* Template selector — always visible, subtle */}
+                  {!isArchived && (
+                    <TemplateSelector entryId={entryId} stage={stage} />
+                  )}
+
                   <StageFieldsEditor
                     entryId={entryId}
                     stageId={stage.id}
                     stageName={stage.name}
+                    templateKey={stage.templateKey}
                     existingFields={stage.fields}
                     isEntered={entered}
                   />
