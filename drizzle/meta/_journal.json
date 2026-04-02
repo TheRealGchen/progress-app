@@ -8,6 +8,13 @@
       "when": 1774550800168,
       "tag": "0000_familiar_black_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1775161243087,
+      "tag": "0001_futuristic_stryfe",
+      "breakpoints": true
     }
   ]
 }

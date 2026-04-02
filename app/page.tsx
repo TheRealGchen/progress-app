@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { entries, stages, trackerTypes } from "@/db/schema";
+import { entries, stages, stageFields, trackerTypes } from "@/db/schema";
 import { eq, isNull, desc } from "drizzle-orm";
 import { EntryCard } from "./components/EntryCard";
 import { QuickAddModal } from "./components/QuickAddModal";
@@ -25,7 +25,11 @@ async function getEntriesWithStages() {
         [...entryStages].reverse().find((s) => s.enteredAt != null) ??
         entryStages[0];
 
-      return { ...entry, currentStage, stages: entryStages };
+      const currentStageFields = currentStage
+        ? await db.select().from(stageFields).where(eq(stageFields.stageId, currentStage.id))
+        : [];
+
+      return { ...entry, currentStage, stages: entryStages, currentStageFields };
     })
   );
 }
@@ -83,6 +87,7 @@ export default async function Dashboard() {
                       priority={entry.priority}
                       currentStage={entry.currentStage}
                       stages={entry.stages}
+                      currentStageFields={entry.currentStageFields}
                     />
                   ))}
                 </div>

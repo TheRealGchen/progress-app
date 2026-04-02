@@ -10,7 +10,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const { name, afterPosition } = await req.json();
+  const { name, afterPosition, templateKey } = await req.json();
 
   if (!name) {
     return NextResponse.json({ error: "name is required" }, { status: 400 });
@@ -36,7 +36,7 @@ export async function POST(
 
   const [newStage] = await db
     .insert(stages)
-    .values({ entryId: parseInt(id), name, position: insertAt, custom: true })
+    .values({ entryId: parseInt(id), name, position: insertAt, custom: true, templateKey: templateKey ?? null })
     .returning();
 
   return NextResponse.json(newStage, { status: 201 });

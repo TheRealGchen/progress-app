@@ -34,6 +34,7 @@ export const stages = sqliteTable("stages", {
   position: integer("position").notNull(),
   enteredAt: text("entered_at"),
   custom: integer("custom", { mode: "boolean" }).notNull().default(false),
+  templateKey: text("template_key"), // which field template to use; null = infer from name
 });
 
 export const stageFields = sqliteTable("stage_fields", {

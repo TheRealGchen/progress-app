@@ -28,12 +28,14 @@ export const STAGE_FIELDS: Record<string, FieldDef[]> = {
     { key: "prep_notes", label: "Prep Notes", type: "textarea", optional: true },
   ],
   Interview: [
-    { key: "round_number", label: "Round #", type: "number" },
+    { key: "scheduled_at", label: "Scheduled", type: "datetime-local" },
+    { key: "round_number", label: "Round #", type: "number", optional: true },
     {
       key: "format",
       label: "Format",
       type: "text",
       placeholder: "Technical, Behavioural, System Design…",
+      optional: true,
     },
     {
       key: "interviewers",
@@ -83,7 +85,29 @@ export const STAGE_FIELDS: Record<string, FieldDef[]> = {
   ],
 };
 
-// Returns field defs for a given stage name, or empty array if none defined.
-export function getStageFields(stageName: string): FieldDef[] {
-  return STAGE_FIELDS[stageName] ?? [];
+// Sentinel for "no structured fields — just notes"
+export const FREEFORM_KEY = "freeform";
+
+// All available template options for the picker
+export const STAGE_TEMPLATES: { key: string; label: string }[] = [
+  { key: FREEFORM_KEY, label: "Notes only" },
+  // Job Hunt
+  { key: "Applied", label: "Applied" },
+  { key: "Phone Screen", label: "Phone Screen" },
+  { key: "Interview", label: "Interview" },
+  { key: "Offer", label: "Offer" },
+  { key: "Closed", label: "Closed" },
+  // Apartment Hunt
+  { key: "Toured", label: "Toured" },
+  { key: "Application Submitted", label: "Application Submitted" },
+  { key: "Approved", label: "Approved" },
+  { key: "Lease Signed", label: "Lease Signed" },
+];
+
+// Returns field defs for a given stage, respecting an explicit templateKey.
+// templateKey=null → infer from stageName; templateKey=FREEFORM_KEY → no structured fields.
+export function getStageFields(stageName: string, templateKey?: string | null): FieldDef[] {
+  const key = templateKey ?? stageName;
+  if (key === FREEFORM_KEY) return [];
+  return STAGE_FIELDS[key] ?? [];
 }
